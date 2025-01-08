@@ -20,13 +20,11 @@
 		return acc;
 	}, {});
 
-	console.log(
-		'Count of items per row:',
-		Object.entries(rowGroups).map(([y, items]) => `Row ${y}: ${items.length} items`)
-	);
+	console.debug(Object.entries(rowGroups).map(([y, items]) => `Row: ${y}, Count: ${items.length}`));
 
 	// First, calculate the maximum items in any row
 	const maxItemsInRow = Math.max(...Object.values(rowGroups).map((row) => row.length));
+	console.debug(`Max items in row: ${maxItemsInRow}`);
 
 	const gridItems: GridItem[] = Object.entries(rowGroups).flatMap(([y, rowPieces]) => {
 		// Sort from whimsical to serious
