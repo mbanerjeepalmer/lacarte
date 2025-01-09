@@ -3,6 +3,7 @@ import type { RequestHandler } from './$types';
 import type { RedditPost, Piece } from '$lib/types';
 import { env } from '$env/dynamic/private';
 import Groq from 'groq-sdk';
+import { getTopicProjections } from '$lib/embeddings';
 
 const client = new Groq({
     apiKey: env.GROQ_API_KEY
@@ -134,7 +135,13 @@ async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[
         tagTopics(posts)
     ]);
 
-    const pieces = posts.map((post) => ({
+    // Get all topics arrays for batch processing
+    const allTopics = posts.map(post => topics[post.data.id] || []);
+
+    // Get projections for all topics in one batch
+    const projections = await getTopicProjections(allTopics);
+
+    const pieces = posts.map((post, index) => ({
         id: post.data.id,
         title: post.data.title,
         url: post.data.url,
@@ -142,9 +149,10 @@ async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[
         subreddit: post.data.subreddit,
         tone: tones[post.data.id] || 0.499999,
         topics: topics[post.data.id] || [],
-        topicProjection: Math.min(1, post.data.subreddit.length / 20), // Fallback to simple heuristic
+        topicProjection: projections[index],
         source: 'reddit'
     }));
+
     return pieces;
 }
 

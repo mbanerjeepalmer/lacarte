@@ -20,18 +20,31 @@
 	const numRows = 20;
 
 	const pieces = data.pieces.pieces || [];
-	console.debug('Pieces:', pieces);
+	// console.debug('PIECES:', JSON.stringify(pieces));
+
+	const projections = pieces.map((p: Piece) => p.topicProjection ?? 0.5);
+	const minProjection = Math.min(...projections);
+	const maxProjection = Math.max(...projections);
+	const projectionRange = maxProjection - minProjection;
 
 	const rowGroups = pieces.reduce(
 		(acc: Record<number, Piece[]>, piece: Piece) => {
-			// Map 0-1 range to 0-4 grid positions
-			const y = Math.min(numRows, Math.floor((piece.topicProjection ?? 0.5) * numRows));
+			const normalisedProjection =
+				projectionRange === 0
+					? 0.499999
+					: ((piece.topicProjection ?? 0.499999) - minProjection) / projectionRange;
+
+			const y = Math.min(numRows - 1, Math.floor(normalisedProjection * numRows));
+			console.debug(
+				`'${piece.title}' (${piece.topicProjection}) normalised -> ${normalisedProjection} -> ${y}`
+			);
 			acc[y] = acc[y] || [];
 			acc[y].push(piece);
 			return acc;
 		},
 		{} as Record<number, Piece[]>
 	);
+	console.debug('ROW GROUPS:', JSON.stringify(rowGroups));
 
 	const entries = Object.entries(rowGroups) as [string, Piece[]][];
 	console.debug(entries.map(([y, items]) => `Row: ${y}, Count: ${items.length}`));
@@ -43,7 +56,7 @@
 
 	const gridItems: GridItem[] = entries.flatMap(([y, rowPieces]) => {
 		// Sort from whimsical to serious
-		rowPieces.sort((a, b) => (a.tone ?? 0.5) - (b.tone ?? 0.5));
+		rowPieces.sort((a, b) => (a.tone ?? 0.499999) - (b.tone ?? 0.499999));
 
 		// Calculate starting X position to center items
 		const startX = Math.floor((maxItemsInRow - rowPieces.length) / 2) + 1;
