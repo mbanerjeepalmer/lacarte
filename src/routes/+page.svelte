@@ -1,14 +1,12 @@
 <script lang="ts">
 	import type { PageData } from './$types';
-	import type { RedditPost } from '$lib/types';
+	import type { Piece } from '$lib/types';
 	let { data }: { data: PageData } = $props();
 
-	interface Piece {
-		reddit_id: string;
-		title: string;
-		tone: number;
-		topicProjection: number;
-		source: string;
+	function refreshData() {
+		const url = new URL(window.location.href);
+		url.searchParams.set('refresh', 'true');
+		window.location.href = url.toString();
 	}
 
 	interface GridItem extends Piece {
@@ -26,9 +24,8 @@
 
 	const rowGroups = pieces.reduce(
 		(acc: Record<number, Piece[]>, piece: Piece) => {
-			// To
 			// Map 0-1 range to 0-4 grid positions
-			const y = Math.min(numRows, Math.floor(piece.topicProjection * numRows));
+			const y = Math.min(numRows, Math.floor((piece.topicProjection ?? 0.5) * numRows));
 			acc[y] = acc[y] || [];
 			acc[y].push(piece);
 			return acc;
@@ -46,16 +43,16 @@
 
 	const gridItems: GridItem[] = entries.flatMap(([y, rowPieces]) => {
 		// Sort from whimsical to serious
-		const sorted = [...rowPieces].sort((a, b) => a.tone - b.tone);
+		rowPieces.sort((a, b) => (a.tone ?? 0.5) - (b.tone ?? 0.5));
 
 		// Calculate starting X position to center items
-		const startX = Math.floor((maxItemsInRow - sorted.length) / 2) + 1;
+		const startX = Math.floor((maxItemsInRow - rowPieces.length) / 2) + 1;
 
 		// Assign X positions based on order in row, offset by startX
-		return sorted.map((piece, i) => ({
+		return rowPieces.map((piece, i) => ({
 			...piece,
 			gridX: startX + i,
-			gridY: Number(y)
+			gridY: parseInt(y)
 		}));
 	});
 </script>
@@ -76,6 +73,9 @@
 			>
 				{item.title}
 				<ul class="mt-2 font-mono">
+					{#if item.topics}
+						<li>topics: {item.topics.join(', ')}</li>
+					{/if}
 					<li>topic: {item.topicProjection}</li>
 					<li>tone: {item.tone}</li>
 					<li>row: {item.gridY}</li>
@@ -84,4 +84,13 @@
 			</div>
 		{/each}
 	</div>
+</div>
+
+<div class="fixed bottom-4 right-4">
+	<button
+		class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
+		onclick={refreshData}
+	>
+		Refresh Data
+	</button>
 </div>

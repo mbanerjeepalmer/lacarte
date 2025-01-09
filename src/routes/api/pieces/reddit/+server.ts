@@ -93,16 +93,56 @@ Example response: {"1hwwvuz": 0.3, "1hx7421": 0.4, "1hx973s": 0.6, "1hwoegx": 0.
     });
 }
 
+async function tagTopics(posts: RedditPost[]): Promise<Record<string, string[]>> {
+    return retryRequest(async () => {
+        const redditPosts = JSON.stringify(posts.map(post => ({
+            id: post.data.id,
+            title: post.data.title,
+            subreddit: post.data.subreddit,
+            url: post.data.url
+        })), null, 0);
+
+        const completion = await client.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: `Tag each post with 2-4 relevant topics based on its title and subreddit.
+Use lowercase, simple terms that capture the key themes.
+You MUST return a valid JSON object with post IDs as keys and arrays of topic tags as values.
+Example input: [{"id":"1hwwvuz","title":"This sums my experience with models on Groq","subreddit":"LocalLLaMA"},{"id":"1hx7421","title":"TransPixar: a new generative model that preserves transparency,","subreddit":"LocalLLaMA"},{"id":"1hx973s","title":"BREAKING NEWS: AI safety blogging companies partnering with Defense Technology companies to lobby for regulations on 'dangerous' Open source AI.","subreddit":"LocalLLaMA"},{"id":"1hwoegx","title":"Valley Heat left a void in me","subreddit":"podcasts"}]
+Example response: {"1hwwvuz": ["technology", "generative artificial intelligence", "large language models", "cloud computing"], "1hx7421": ["", "ai", "ethics"], "1hx973s": ["technology", "ai", "ethics"], "1hwoegx": ["podcasts"]}`
+                },
+                {
+                    role: "user",
+                    content: redditPosts
+                }
+            ],
+            model: "llama3-70b-8192",
+            temperature: 0.7,
+            max_tokens: 4096,
+            response_format: { type: "json_object" }
+        });
+
+        console.debug('TOPIC TAGS RESPONSE', completion.choices[0]?.message?.content);
+        return parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+    });
+}
+
 async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[]> {
-    const tones = await rateTones(posts);
+    const [tones, topics] = await Promise.all([
+        rateTones(posts),
+        tagTopics(posts)
+    ]);
+
     const pieces = posts.map((post) => ({
         id: post.data.id,
         title: post.data.title,
         url: post.data.url,
         published_utc: new Date(post.data.created_utc * 1000).toISOString(),
         subreddit: post.data.subreddit,
-        tone: tones[post.data.id] || 0.555555,
-        topicProjection: Math.min(1, post.data.subreddit.length / 20),
+        tone: tones[post.data.id] || 0.499999,
+        topics: topics[post.data.id] || [],
+        topicProjection: Math.min(1, post.data.subreddit.length / 20), // Fallback to simple heuristic
         source: 'reddit'
     }));
     return pieces;
@@ -110,7 +150,7 @@ async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[
 
 export const GET: RequestHandler = async ({ fetch }) => {
     try {
-        const response = await fetch('https://oauth.reddit.com/best', {
+        const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/', {
             headers: {
                 'Authorization': `bearer ${env.HARDCODED_REDDIT_TOKEN}`
             }
