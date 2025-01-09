@@ -1,6 +1,8 @@
 lacarte.code-workspace
 node_modules
 
+.cache
+
 # Output
 .output
 .vercel
