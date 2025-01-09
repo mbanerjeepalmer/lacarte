@@ -1,15 +1,4 @@
-export interface Piece {
-    id: string;
-    title: string;
-    url: string;
-    topics: string[];
-    tone: number;  // 0.0 = whimsical, 1.0 = serious
-    topicProjection: number;  // 0.0 to 1.0, projection of topic similarity into 1D
-    published: string;
-    subreddit: string;
-}
 
-// Mock data derived from the Reddit feed
 export const pieces: Piece[] = [
     {
         id: "t3_1hvl1iy",

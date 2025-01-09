@@ -75,8 +75,8 @@
 				style="grid-row: {item.gridY}; grid-column: {item.gridX};"
 			>
 				{item.title}
-				<ul>
-					<li>topic projection: {item.topicProjection}</li>
+				<ul class="mt-2 font-mono">
+					<li>topic: {item.topicProjection}</li>
 					<li>tone: {item.tone}</li>
 					<li>row: {item.gridY}</li>
 					<li>column: {item.gridX}</li>

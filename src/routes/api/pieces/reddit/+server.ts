@@ -1,7 +1,112 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import type { RedditPost } from '$lib/types';
+import type { RedditPost, Piece } from '$lib/types';
 import { env } from '$env/dynamic/private';
+import Groq from 'groq-sdk';
+
+const client = new Groq({
+    apiKey: env.GROQ_API_KEY
+});
+
+async function retryRequest<T>(fn: () => Promise<T>, maxAttempts = 3): Promise<T> {
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+            return await fn();
+        } catch (error: any) {
+            console.debug(`On attempt ${attempt} of ${maxAttempts} got ${error.status}`, error);
+            if (attempt === maxAttempts || !(error.status === 503 || error.status === 429)) {
+                console.error('Error in retryRequest');
+                throw error;
+            }
+
+            let delay = 15000;
+            if (error.headers?.['retry-after']) {
+                delay = parseInt(error.headers['retry-after']) * 1000;
+            }
+            console.debug(`Waiting ${delay}ms before retrying`);
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+    throw new Error('Max retries reached');
+}
+
+function extractJson(text: string): any {
+    // Try to match anything between curly braces, including newlines
+    const pattern = /({[\s\S]*})/;
+    const match = text.match(pattern);
+
+    if (match) {
+        try {
+            return JSON.parse(match[1]);
+        } catch (error) {
+            console.error('Failed to parse extracted JSON', error);
+            return null;
+        }
+    }
+
+    console.warn('No JSON found in text:', text);
+    return null;
+}
+
+function parseRatingResponse(response: string) {
+    try {
+        return JSON.parse(response);
+    } catch (error) {
+        console.error('Error parsing rating response directly, attempting extraction', error);
+        return extractJson(response);
+    }
+}
+
+async function rateTones(posts: RedditPost[]): Promise<Record<string, number>> {
+    return retryRequest(async () => {
+        const redditPosts = JSON.stringify(posts.map(post => ({
+            id: post.data.id,
+            title: post.data.title,
+            subreddit: post.data.subreddit
+        })), null, 0);
+
+        console.debug('REDDIT POSTS', redditPosts);
+
+        const completion = await client.chat.completions.create({
+            messages: [
+                {
+                    role: "system",
+                    content: `Rate the tone of each post title from 0.0 (whimsical, casual, silly, funny) to 1.0 (serious, formal, complex, weighty, deep).
+Return only a JSON object mapping post IDs to tone scores.
+Example input: [{"id":"1hwwvuz","title":"This sums my experience with models on Groq","subreddit":"LocalLLaMA"},{"id":"1hx7421","title":"TransPixar: a new generative model that preserves transparency,","subreddit":"LocalLLaMA"},{"id":"1hx973s","title":"BREAKING NEWS: AI safety blogging companies partnering with Defense Technology companies to lobby for regulations on 'dangerous' Open source AI.","subreddit":"LocalLLaMA"},{"id":"1hwoegx","title":"Valley Heat left a void in me","subreddit":"podcasts"},{"id":"1hx60t4","title":"New Microsoft research - rStar-Math: Small LLMs Can Master Math Reasoning with Self-Evolved Deep Thinking\n","subreddit":"LocalLLaMA"},{"id":"1hxap5s","title":"Trying to remember a podcast","subreddit":"podcasts"},{"id":"1hx5i8u","title":"Phi 4 is just 14B But Better than llama 3.1 70b for several tasks. ","subreddit":"LocalLLaMA"},{"id":"1hx5486","title":"We’re gonna have AGI by the end of this year aren’t we lol","subreddit":"singularity"},{"id":"1hx6v4k","title":"Need Help Remembering Podcast","subreddit":"podcasts"},{"id":"1hws1bv","title":"What podcast has the funniest storytelling?","subreddit":"podcasts"},{"id":"1hwucwb","title":"Answer Me This! Returns!! ","subreddit":"podcasts"},{"id":"1hwzmqc","title":"Phi-4 Llamafied + 4 Bug Fixes + GGUFs, Dynamic 4bit Quants","subreddit":"LocalLLaMA"},{"id":"1hx80jl","title":"What’s a Song You Love That No One Talks About?","subreddit":"spotify"},{"id":"1hx99oi","title":"Former OpenAI employee Miles Brundage: \"o1 is just an LLM though, no reasoning infrastructure. The reasoning is in the chain of thought.\" Current OpenAI employee roon: \"Miles literally knows what o1 does.\"","subreddit":"LocalLLaMA"},{"id":"1hwmy39","title":"Phi-4 has been released","subreddit":"LocalLLaMA"},{"id":"1hwthrq","title":"Why I think that NVIDIA Project DIGITS will have 273 GB/s of memory bandwidth","subreddit":"LocalLLaMA"},{"id":"1hx8f7y","title":"Hello guys, what are your go to podcasts if you are into sports? Can you guys suggest any adventure sports podcasts you listen often? ","subreddit":"podcasts"},{"id":"1hx8nex","title":"\"rStar-Math demonstrates that small language models (SLMs) can rival or even surpass the math reasoning capability of OpenAI o1, without distillation from superior models. rStar-Math achieves this by exercising \"deep thinking\" through Monte Carlo Tree Search (MCTS).....\"","subreddit":"LocalLLaMA"}
+
+Example response: {"1hwwvuz": 0.3, "1hx7421": 0.4, "1hx973s": 0.6, "1hwoegx": 0.4, "1hx60t4": 0.8, "1hxap5s": 0.4, "1hx5i8u": 0.5, "1hx5486": 0.2, "1hx6v4k": 0.3, "1hws1bv": 0.2, "1hwucwb": 0.2, "1hwzmqc": 0.6, "1hx80jl": 0.3, "1hx99oi": 0.6, "1hwmy39": 0.6, "1hwthrq": 0.6, "1hx8f7y": 0.3, "1hx8nex": 0.7}`
+                },
+                {
+                    role: "user",
+                    content: redditPosts
+                }
+            ],
+            model: "llama3-70b-8192",
+            temperature: 0.7,
+            max_tokens: 4096,
+            response_format: { type: "json_object" }
+        });
+
+        console.debug('LLM RATING RESPONSE', completion.choices[0]?.message?.content);
+        return parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+    });
+}
+
+async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[]> {
+    const tones = await rateTones(posts);
+    const pieces = posts.map((post) => ({
+        id: post.data.id,
+        title: post.data.title,
+        url: post.data.url,
+        published_utc: new Date(post.data.created_utc * 1000).toISOString(),
+        subreddit: post.data.subreddit,
+        tone: tones[post.data.id] || 0.555555,
+        topicProjection: Math.min(1, post.data.subreddit.length / 20),
+        source: 'reddit'
+    }));
+    return pieces;
+}
 
 export const GET: RequestHandler = async ({ fetch }) => {
     try {
@@ -12,7 +117,6 @@ export const GET: RequestHandler = async ({ fetch }) => {
         });
 
         if (!response.ok) {
-            // Log full response details
             console.error('Reddit API error:', {
                 status: response.status,
                 statusText: response.statusText,
@@ -22,7 +126,6 @@ export const GET: RequestHandler = async ({ fetch }) => {
                 type: response.type,
                 ok: response.ok
             });
-            // Get response body if possible
             const errorBody = await response.text().catch(e => `Failed to get response body: ${e}`);
             console.error('Response body:', errorBody);
             throw new Error(`Reddit API returned ${response.status}`);
@@ -34,17 +137,7 @@ export const GET: RequestHandler = async ({ fetch }) => {
             console.debug('First item:', JSON.stringify(data.data.children[0].data, null, 4));
         }
 
-        // Transform Reddit posts to match our Piece interface
-        const pieces = data.data.children.map((post: { data: any }) => ({
-            reddit_id: post.data.id,
-            title: post.data.title,
-            // Using score as a proxy for tone (normalized to 0-1)
-            tone: Math.min(1, Math.max(0, post.data.score / 10000)),
-            // Using subreddit name length as a temporary topic projection
-            topicProjection: Math.min(1, post.data.subreddit.length / 20),
-            source: 'reddit'
-        }));
-
+        const pieces = await transformRedditPostsToPieces(data.data.children);
         return json({ pieces });
     } catch (error) {
         console.error('Error fetching Reddit data:', error);
