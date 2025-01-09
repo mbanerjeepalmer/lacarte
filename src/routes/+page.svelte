@@ -73,18 +73,18 @@
 	});
 </script>
 
-<div class="h-screen w-screen snap-both snap-mandatory overflow-auto">
+<div class="fixed inset-0 snap-both snap-mandatory overflow-auto">
 	<div
-		class="mx-auto grid w-full max-w-7xl gap-2"
+		class="grid gap-2"
 		style="
-			grid-template-columns: repeat({maxItemsInRow}, minmax(min(80vw, 50rem), 1fr)); 
+			grid-template-columns: repeat({maxItemsInRow}, minmax(min(80vw, 50rem), min(80vw, 50rem))); 
 			grid-template-rows: repeat({numRows}, auto);
-			justify-content: center;
+
 		"
 	>
 		{#each gridItems as item}
 			<div
-				class="snap-center border-2 border-gray-200 p-4"
+				class="snap-center border-2 border-gray-200 bg-white p-4"
 				style="grid-row: {item.gridY}; grid-column: {item.gridX};"
 			>
 				{item.title}
