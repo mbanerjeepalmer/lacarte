@@ -4,6 +4,7 @@ import type { RedditPost, Piece } from '$lib/types';
 import { env } from '$env/dynamic/private';
 import Groq from 'groq-sdk';
 import { getTopicProjections } from '$lib/embeddings';
+import { error } from '@sveltejs/kit';
 
 const client = new Groq({
     apiKey: env.GROQ_API_KEY
@@ -89,8 +90,10 @@ Example response: {"1hwwvuz": 0.3, "1hx7421": 0.4, "1hx973s": 0.6, "1hwoegx": 0.
             response_format: { type: "json_object" }
         });
 
-        console.debug('LLM RATING RESPONSE', completion.choices[0]?.message?.content);
-        return parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+        // console.debug('LLM RATING RESPONSE', completion.choices[0]?.message?.content);
+        const parsed = parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+        console.debug(`LLM TONE RATINGS`, JSON.stringify(parsed));
+        return parsed;
     });
 }
 
@@ -107,7 +110,7 @@ async function tagTopics(posts: RedditPost[]): Promise<Record<string, string[]>>
             messages: [
                 {
                     role: "system",
-                    content: `Tag each post with 2-4 relevant topics based on its title and subreddit.
+                    content: `Tag each post with 2-4 relevant topics. These should reflect the subject matter and/or the type of post. You may use the title, subreddit and URL.
 Use lowercase, simple terms that capture the key themes.
 You MUST return a valid JSON object with post IDs as keys and arrays of topic tags as values.
 Example input: [{"id":"1hwwvuz","title":"This sums my experience with models on Groq","subreddit":"LocalLLaMA"},{"id":"1hx7421","title":"TransPixar: a new generative model that preserves transparency,","subreddit":"LocalLLaMA"},{"id":"1hx973s","title":"BREAKING NEWS: AI safety blogging companies partnering with Defense Technology companies to lobby for regulations on 'dangerous' Open source AI.","subreddit":"LocalLLaMA"},{"id":"1hwoegx","title":"Valley Heat left a void in me","subreddit":"podcasts"}]
@@ -124,8 +127,10 @@ Example response: {"1hwwvuz": ["technology", "generative artificial intelligence
             response_format: { type: "json_object" }
         });
 
-        console.debug('TOPIC TAGS RESPONSE', completion.choices[0]?.message?.content);
-        return parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+
+        const parsed = parseRatingResponse(completion.choices[0]?.message?.content || '{}') || {};
+        console.debug(`LLM TOPIC TAGS`, JSON.stringify(parsed));
+        return parsed;
     });
 }
 
@@ -176,19 +181,26 @@ export const GET: RequestHandler = async ({ fetch }) => {
             });
             const errorBody = await response.text().catch(e => `Failed to get response body: ${e}`);
             console.error('Response body:', errorBody);
-            throw new Error(`Reddit API returned ${response.status}`);
+            throw error(response.status, `Reddit API returned ${response.status}`);
         }
 
         const data = await response.json();
 
+        if (!data?.data?.children?.length) {
+            return json({
+                pieces: [],
+                warning: 'No Reddit posts found'
+            });
+        }
+
         if (data.data.children.length > 0) {
-            console.debug('First item:', JSON.stringify(data.data.children[0].data, null, 4));
+            console.debug('First item:', JSON.stringify(data.data.children[0].data));
         }
 
         const pieces = await transformRedditPostsToPieces(data.data.children);
         return json({ pieces });
-    } catch (error) {
-        console.error('Error fetching Reddit data:', error);
-        return new Response('Failed to fetch Reddit data', { status: 500 });
+    } catch (err: any) {
+        console.error('Error fetching Reddit data:', err);
+        throw error(500, err?.message || 'Failed to fetch Reddit data');
     }
 }

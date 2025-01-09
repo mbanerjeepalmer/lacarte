@@ -26,6 +26,7 @@
 	const minProjection = Math.min(...projections);
 	const maxProjection = Math.max(...projections);
 	const projectionRange = maxProjection - minProjection;
+	console.debug('Projection min, max, range:', { minProjection, maxProjection, projectionRange });
 
 	const rowGroups = pieces.reduce(
 		(acc: Record<number, Piece[]>, piece: Piece) => {
@@ -44,10 +45,12 @@
 		},
 		{} as Record<number, Piece[]>
 	);
-	console.debug('ROW GROUPS:', JSON.stringify(rowGroups));
+	// console.debug('ROW GROUPS:', JSON.stringify(rowGroups));
 
 	const entries = Object.entries(rowGroups) as [string, Piece[]][];
-	console.debug(entries.map(([y, items]) => `Row: ${y}, Count: ${items.length}`));
+	console.debug(
+		JSON.stringify(entries.map(([y, items]) => `Row index ${y} contains ${items.length} items.`))
+	);
 
 	// First, calculate the maximum items in any row
 	const values = Object.values(rowGroups) as Piece[][];
