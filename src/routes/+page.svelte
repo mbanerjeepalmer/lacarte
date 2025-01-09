@@ -75,16 +75,16 @@
 
 <div class="h-screen w-screen snap-both snap-mandatory overflow-auto">
 	<div
-		class="mx-auto grid gap-2 p-2"
+		class="mx-auto grid w-full max-w-7xl gap-2"
 		style="
-			grid-template-columns: repeat({maxItemsInRow}, 200px); 
+			grid-template-columns: repeat({maxItemsInRow}, minmax(min(80vw, 50rem), 1fr)); 
 			grid-template-rows: repeat({numRows}, auto);
 			justify-content: center;
 		"
 	>
 		{#each gridItems as item}
 			<div
-				class="w-[200px] snap-center border-2 border-gray-200 p-4 shadow-lg"
+				class="snap-center border-2 border-gray-200 p-4"
 				style="grid-row: {item.gridY}; grid-column: {item.gridX};"
 			>
 				{item.title}
