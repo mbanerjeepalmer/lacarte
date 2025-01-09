@@ -3,9 +3,15 @@
 	import type { RedditPost } from '$lib/types';
 	let { data }: { data: PageData } = $props();
 
-	interface Piece extends RedditPost {}
+	interface Piece {
+		reddit_id: string;
+		title: string;
+		tone: number;
+		topicProjection: number;
+		source: string;
+	}
 
-	interface GridItem extends RedditPost {
+	interface GridItem extends Piece {
 		gridX: number;
 		gridY: number;
 	}
@@ -13,24 +19,32 @@
 	// As a stopgap until I work out a better algorithm we're just grouping by topic and then sorting within each row.
 	// Later it would be nice to make it more consistent.
 	// So if you're on topic 0.5 and tone 0.7, then moving to topic 0.6 keeps tone 0.7
-	const numRows = 5;
+	const numRows = 20;
 
-	const rowGroups = data.pieces.reduce((acc: Record<number, Piece[]>, piece) => {
-		// To
-		// Map 0-1 range to 0-4 grid positions
-		const y = Math.min(numRows, Math.floor(piece.topicProjection * numRows));
-		acc[y] = acc[y] || [];
-		acc[y].push(piece);
-		return acc;
-	}, {});
+	const pieces = data.pieces.pieces || [];
+	console.debug('Pieces:', pieces);
 
-	console.debug(Object.entries(rowGroups).map(([y, items]) => `Row: ${y}, Count: ${items.length}`));
+	const rowGroups = pieces.reduce(
+		(acc: Record<number, Piece[]>, piece: Piece) => {
+			// To
+			// Map 0-1 range to 0-4 grid positions
+			const y = Math.min(numRows, Math.floor(piece.topicProjection * numRows));
+			acc[y] = acc[y] || [];
+			acc[y].push(piece);
+			return acc;
+		},
+		{} as Record<number, Piece[]>
+	);
+
+	const entries = Object.entries(rowGroups) as [string, Piece[]][];
+	console.debug(entries.map(([y, items]) => `Row: ${y}, Count: ${items.length}`));
 
 	// First, calculate the maximum items in any row
-	const maxItemsInRow = Math.max(...Object.values(rowGroups).map((row) => row.length));
+	const values = Object.values(rowGroups) as Piece[][];
+	const maxItemsInRow = Math.max(...values.map((row) => row.length));
 	console.debug(`Max items in row: ${maxItemsInRow}`);
 
-	const gridItems: GridItem[] = Object.entries(rowGroups).flatMap(([y, rowPieces]) => {
+	const gridItems: GridItem[] = entries.flatMap(([y, rowPieces]) => {
 		// Sort from whimsical to serious
 		const sorted = [...rowPieces].sort((a, b) => a.tone - b.tone);
 

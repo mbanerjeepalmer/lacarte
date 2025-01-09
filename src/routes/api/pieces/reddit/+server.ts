@@ -35,8 +35,8 @@ export const GET: RequestHandler = async ({ fetch }) => {
         }
 
         // Transform Reddit posts to match our Piece interface
-        const pieces = data.data.children.map((post: RedditPost) => ({
-            reddit_id: post.id,
+        const pieces = data.data.children.map((post: { data: any }) => ({
+            reddit_id: post.data.id,
             title: post.data.title,
             // Using score as a proxy for tone (normalized to 0-1)
             tone: Math.min(1, Math.max(0, post.data.score / 10000)),
