@@ -1,40 +1,35 @@
 import { browser } from '$app/environment';
+import type { PageLoad } from './$types';
 
-export async function load({ fetch, url }) {
-    const forceRefresh = url.searchParams.get('refresh') === 'true';
+interface PageData {
+    lastFetchTimestamp: string;
+}
 
+interface LoadResult {
+    pieces: any[];
+    lastFetchTimestamp: string;
+}
 
+export const load: PageLoad = async ({ fetch, url, data }) => {
+    console.log(`Server fetched: ${data.fetched}, last fetch: ${data.lacarteLastFetch}, server piece count: ${data.pieces.length}`)
+    console.debug(`Server data: ${JSON.stringify(data)}`)
     if (browser) {
-        console.log(`In the browser`)
-        const cachedData = localStorage.getItem('lacartePieces');
-        const cachedTimestamp = localStorage.getItem('lacartePiecesTimestamp');
-
-        const now = Date.now();
-        const twentyMinutesInMs = 20 * 60 * 1000;
-
-
-        console.debug(`cachedData: ${cachedData}`,
-            `cachedTimestamp: ${cachedTimestamp}`, `forceRefresh: ${forceRefresh}`)
-
-        if (cachedData && cachedTimestamp && !forceRefresh) {
-            const age = now - parseInt(cachedTimestamp);
-            if (age < twentyMinutesInMs) {
-                console.debug('Using cached Reddit pieces data');
-                return { pieces: JSON.parse(cachedData) };
+        // If the server did fetch new data then set it in local storage
+        if (data?.fetched && data.pieces) {
+            localStorage.setItem('lacartePieces', JSON.stringify(data.pieces));
+            return { fetched: true, lacarteLastFetch: data.lacarteLastFetch, pieces: data.pieces };
+        }
+        else {
+            console.log(`Attempting to load cached data`)
+            const localData = localStorage.getItem('lacartePieces');
+            if (localData) {
+                const pieces = JSON.parse(localData);
+                console.log(`Cached piece count: ${pieces.length}`)
+                return { fetched: false, lacarteLastFetch: data.lacarteLastFetch, pieces: pieces };
+            } else {
+                console.error(`No data from the server or local storage`);
+                return { fetched: false, lacarteLastFetch: data.lacarteLastFetch, pieces: [] };
             }
         }
     }
-
-
-    console.log('Fetching fresh Reddit pieces data');
-    const piecesResp = await fetch('/api/pieces/reddit');
-    const pieces = await piecesResp.json();
-
-
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('redditPieces', JSON.stringify(pieces));
-        localStorage.setItem('redditPiecesTimestamp', Date.now().toString());
-    }
-
-    return { pieces };
 }

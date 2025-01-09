@@ -19,8 +19,8 @@
 	// So if you're on topic 0.5 and tone 0.7, then moving to topic 0.6 keeps tone 0.7
 	const numRows = 20;
 
-	const pieces = data.pieces.pieces || [];
-	// console.debug('PIECES:', JSON.stringify(pieces));
+	const pieces = data.pieces || [];
+	console.debug('PIECES:', JSON.stringify(pieces));
 
 	const projections = pieces.map((p: Piece) => p.topicProjection ?? 0.5);
 	const minProjection = Math.min(...projections);
