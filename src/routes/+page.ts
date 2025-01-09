@@ -1,15 +1,6 @@
 import { browser } from '$app/environment';
 import type { PageLoad } from './$types';
 
-interface PageData {
-    lastFetchTimestamp: string;
-}
-
-interface LoadResult {
-    pieces: any[];
-    lastFetchTimestamp: string;
-}
-
 export const load: PageLoad = async ({ fetch, url, data }) => {
     console.log(`Server fetched: ${data.fetched}, last fetch: ${data.lacarteLastFetch}, server piece count: ${data.pieces.length}`)
     console.debug(`Server data: ${JSON.stringify(data)}`)

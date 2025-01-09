@@ -4,11 +4,26 @@ export interface Piece {
     url: string;
     topics?: string[];
     tone?: number;  // 0.0 = whimsical, 1.0 = serious
-    topics?: string[]
     topicProjection?: number;  // 0.0 to 1.0, projection of topic similarity into 1D
     published_utc: string;
     subreddit?: string;
     source?: string;
+    // Reddit specific fields
+    author?: string | null;
+    score?: number | null;
+    num_comments?: number | null;
+    upvote_ratio?: number | null;
+    preview?: RedditPreview | null;
+    is_video?: boolean | null;
+    post_hint?: string | null;
+    thumbnail?: string | null;
+    thumbnail_width?: number | null;
+    thumbnail_height?: number | null;
+    permalink?: string | null;
+    domain?: string | null;
+    selftext?: string | null;
+    selftext_html?: string | null;
+    is_self?: boolean | null;
 }
 
 export interface RedditPreview {

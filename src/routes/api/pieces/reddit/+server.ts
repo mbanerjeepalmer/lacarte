@@ -155,7 +155,22 @@ async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[
         tone: tones[post.data.id] || 0.499999,
         topics: topics[post.data.id] || [],
         topicProjection: projections[index],
-        source: 'reddit'
+        source: 'reddit',
+        author: post.data.author,
+        score: post.data.score,
+        num_comments: post.data.num_comments,
+        upvote_ratio: post.data.upvote_ratio,
+        preview: post.data.preview,
+        is_video: post.data.is_video,
+        post_hint: post.data.post_hint,
+        thumbnail: post.data.thumbnail,
+        thumbnail_width: post.data.thumbnail_width,
+        thumbnail_height: post.data.thumbnail_height,
+        permalink: post.data.permalink,
+        domain: post.data.domain,
+        selftext: post.data.selftext,
+        selftext_html: post.data.selftext_html,
+        is_self: post.data.is_self
     }));
 
     return pieces;
