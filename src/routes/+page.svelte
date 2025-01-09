@@ -1,7 +1,11 @@
 <script lang="ts">
-	import { pieces, type Piece } from '$lib/mock-data';
+	import type { PageData } from './$types';
+	import type { RedditPost } from '$lib/types';
+	let { data }: { data: PageData } = $props();
 
-	interface GridItem extends Piece {
+	interface Piece extends RedditPost {}
+
+	interface GridItem extends RedditPost {
 		gridX: number;
 		gridY: number;
 	}
@@ -11,7 +15,7 @@
 	// So if you're on topic 0.5 and tone 0.7, then moving to topic 0.6 keeps tone 0.7
 	const numRows = 5;
 
-	const rowGroups = pieces.reduce((acc: Record<number, Piece[]>, piece) => {
+	const rowGroups = data.pieces.reduce((acc: Record<number, Piece[]>, piece) => {
 		// To
 		// Map 0-1 range to 0-4 grid positions
 		const y = Math.min(numRows, Math.floor(piece.topicProjection * numRows));
