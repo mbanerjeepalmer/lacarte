@@ -170,11 +170,11 @@
 	</div>
 </div>
 
-<div class="fixed bottom-4 right-4">
+<!-- <div class="fixed bottom-4 right-4">
 	<button
 		class="rounded bg-blue-500 px-4 py-2 font-bold text-white hover:bg-blue-700"
 		onclick={refreshData}
 	>
 		Refresh Data
 	</button>
-</div>
+</div> -->
