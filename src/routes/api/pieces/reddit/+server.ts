@@ -3,7 +3,6 @@ import type { RequestHandler } from './$types';
 import type { RedditPost, Piece } from '$lib/types';
 import { env } from '$env/dynamic/private';
 import Groq from 'groq-sdk';
-import { getTopicProjections } from '$lib/embeddings';
 import { error } from '@sveltejs/kit';
 
 const client = new Groq({
@@ -134,48 +133,6 @@ Example response: {"1hwwvuz": ["technology", "artificial intelligence", "large l
     });
 }
 
-async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[]> {
-    const [tones, topics] = await Promise.all([
-        rateTones(posts),
-        tagTopics(posts)
-    ]);
-
-    // Get all topics arrays for batch processing
-    const allTopics = posts.map(post => topics[post.data.id] || []);
-
-    // Get projections for all topics in one batch
-    const projections = await getTopicProjections(allTopics);
-
-    const pieces = posts.map((post, index) => ({
-        id: post.data.id,
-        title: post.data.title,
-        url: post.data.url,
-        published_utc: new Date(post.data.created_utc * 1000).toISOString(),
-        subreddit: post.data.subreddit,
-        tone: tones[post.data.id] || 0.499999,
-        topics: topics[post.data.id] || [],
-        topicProjection: projections[index],
-        source: 'reddit',
-        author: post.data.author,
-        score: post.data.score,
-        num_comments: post.data.num_comments,
-        upvote_ratio: post.data.upvote_ratio,
-        preview: post.data.preview,
-        is_video: post.data.is_video,
-        post_hint: post.data.post_hint,
-        thumbnail: post.data.thumbnail,
-        thumbnail_width: post.data.thumbnail_width,
-        thumbnail_height: post.data.thumbnail_height,
-        permalink: post.data.permalink,
-        domain: post.data.domain,
-        selftext: post.data.selftext,
-        selftext_html: post.data.selftext_html,
-        is_self: post.data.is_self
-    }));
-
-    return pieces;
-}
-
 export const GET: RequestHandler = async ({ fetch }) => {
     try {
         const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/?raw_json=1&count=100', {
@@ -211,8 +168,49 @@ export const GET: RequestHandler = async ({ fetch }) => {
         if (data.data.children.length > 0) {
             console.debug('First item:', JSON.stringify(data.data.children[0].data));
         }
+        let posts = data.data.children;
 
-        const pieces = await transformRedditPostsToPieces(data.data.children);
+        const [tones, topics] = await Promise.all([
+            rateTones(posts),
+            tagTopics(posts)
+        ]);
+        const allTopics = posts.map((post: RedditPost) => topics[post.data.id] || []);
+
+        const projectionsResponse = await fetch('/api/embeddings', {
+            method: 'POST',
+            body: JSON.stringify({ tags: allTopics })
+        });
+
+        const projections = (await projectionsResponse.json()).projections;
+        console.debug('PROJECTIONS:', projections);
+
+        const pieces = posts.map((post: RedditPost, index: number) => ({
+            id: post.data.id,
+            title: post.data.title,
+            url: post.data.url,
+            published_utc: new Date(post.data.created_utc * 1000).toISOString(),
+            subreddit: post.data.subreddit,
+            tone: tones[post.data.id] || 0.499999,
+            topics: topics[post.data.id] || [],
+            topicProjection: projections[index],
+            source: 'reddit',
+            author: post.data.author,
+            score: post.data.score,
+            num_comments: post.data.num_comments,
+            upvote_ratio: post.data.upvote_ratio,
+            preview: post.data.preview,
+            is_video: post.data.is_video,
+            post_hint: post.data.post_hint,
+            thumbnail: post.data.thumbnail,
+            thumbnail_width: post.data.thumbnail_width,
+            thumbnail_height: post.data.thumbnail_height,
+            permalink: post.data.permalink,
+            domain: post.data.domain,
+            selftext: post.data.selftext,
+            selftext_html: post.data.selftext_html,
+            is_self: post.data.is_self
+        }));
+
         return json({ pieces });
     } catch (err: any) {
         console.error('Error fetching Reddit data:', err);

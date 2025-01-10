@@ -159,7 +159,7 @@
 
 					<div class="mt-4 font-mono text-xs text-gray-400">
 						<div>topics: {item.topics?.join(', ')}</div>
-						<div>topic projection: {item.topicProjection?.toFixed(2)}</div>
+						<div>topic projection: {item.topicProjection}</div>
 						<div>tone: {item.tone?.toFixed(2)}</div>
 						<div>row: {item.gridY}</div>
 						<div>column: {item.gridX}</div>
