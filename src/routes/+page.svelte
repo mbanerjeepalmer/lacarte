@@ -91,6 +91,10 @@
 			...data.pieces[0],
 			position: { row: 0, col: 0 }
 		};
+
+		// TODO: still works but get a warning
+		//State referenced in its own scope will never update. Did you mean to reference it inside a closure?
+		// https://svelte.dev/e/state_referenced_locallysvelte(state_referenced_locally)
 		virtual_grid.set('0,0', initial_piece);
 		virtual_grid = generate_surrounding_pieces({ row: 0, col: 0 });
 	}
