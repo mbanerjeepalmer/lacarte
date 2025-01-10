@@ -1,31 +1,100 @@
 <script lang="ts">
-	import CenterObserver from '$lib/components/CentreObserver.svelte';
 	const { data } = $props();
-	let random_pieces = $state<typeof data.pieces>([]);
-	if (data.pieces) {
-		random_pieces = [...data.pieces].sort(() => Math.random() - 0.5).slice(0, 9);
+
+	interface GridPosition {
+		row: number;
+		col: number;
 	}
 
-	let current_piece = $state<(typeof random_pieces)[0]>();
+	interface GridPiece {
+		id: string;
+		title: string;
+		position: GridPosition;
+	}
 
-	let centred = $state({ id: '' });
-	let test = $state(false);
+	// Core state - separate concerns
+	let current_position = $state<GridPosition>({ row: 0, col: 0 });
+	let virtual_grid = $state<Map<string, GridPiece>>(new Map());
 
-	$effect(() => {
-		if (current_piece) {
-			console.info('Center piece changed:', current_piece.title);
+	// Simple position-based piece lookup
+	function get_piece_at_position(position: GridPosition): GridPiece | undefined {
+		return virtual_grid.get(`${position.row},${position.col}`);
+	}
+
+	// Movement only updates position
+	function move(direction: 'up' | 'down' | 'left' | 'right') {
+		const new_position = { ...current_position };
+
+		switch (direction) {
+			case 'up':
+				new_position.row--;
+				break;
+			case 'down':
+				new_position.row++;
+				break;
+			case 'left':
+				new_position.col--;
+				break;
+			case 'right':
+				new_position.col++;
+				break;
 		}
-	});
+
+		console.info('Moving to position:', new_position);
+		current_position = new_position;
+	}
+
+	// Initial grid setup - only runs once
+	if (data.pieces?.length) {
+		console.debug('Setting up initial grid');
+		const initial_piece = {
+			...data.pieces[0],
+			position: { row: 0, col: 0 }
+		};
+		virtual_grid.set('0,0', initial_piece);
+	}
 </script>
 
-<div class="relative overflow-auto">
-	<div class="grid grid-cols-[repeat(3,80vw)] grid-rows-[repeat(3,80vh)] overflow-scroll">
-		{#if random_pieces.length > 0}
-			{#each random_pieces as piece}
-				<CenterObserver bind:centred id={piece.id}>
-					{piece.title}
-				</CenterObserver>
+<div class="flex flex-col items-center gap-4 p-4">
+	<div class="grid grid-cols-3 gap-2">
+		{#each [-1, 0, 1] as row}
+			{#each [-1, 0, 1] as col}
+				{@const position = {
+					row: current_position.row + row,
+					col: current_position.col + col
+				}}
+				{@const piece = get_piece_at_position(position)}
+				<div
+					class="flex h-[200px] w-[200px] items-center justify-center border-2 border-black p-4"
+					class:bg-green-500={row === 0 && col === 0}
+					class:bg-gray-200={row !== 0 || col !== 0}
+				>
+					<div class="text-center">
+						{#if piece}
+							<div>{piece.title}</div>
+						{:else}
+							<div class="text-gray-400">Empty</div>
+						{/if}
+						<div class="text-sm text-gray-600">
+							({position.row}, {position.col})
+						</div>
+					</div>
+				</div>
 			{/each}
-		{/if}
+		{/each}
+	</div>
+
+	<div class="grid grid-cols-3 gap-2">
+		<div></div>
+		<button class="bg-blue-500 p-2 text-white" on:click={() => move('up')}>Up</button>
+		<div></div>
+		<button class="bg-blue-500 p-2 text-white" on:click={() => move('left')}>Left</button>
+		<div class="p-2 text-center">
+			({current_position.row}, {current_position.col})
+		</div>
+		<button class="bg-blue-500 p-2 text-white" on:click={() => move('right')}>Right</button>
+		<div></div>
+		<button class="bg-blue-500 p-2 text-white" on:click={() => move('down')}>Down</button>
+		<div></div>
 	</div>
 </div>
