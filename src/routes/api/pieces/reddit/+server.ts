@@ -110,11 +110,11 @@ async function tagTopics(posts: RedditPost[]): Promise<Record<string, string[]>>
             messages: [
                 {
                     role: "system",
-                    content: `Tag each post with 2-4 relevant topics. These should reflect the subject matter and/or the type of post. You may use the title, subreddit and URL.
+                    content: `Tag each post with 5-10 relevant topics. These should reflect the subject matter and/or the type of post. You may use the title, subreddit and URL.
 Use lowercase, simple terms that capture the key themes.
 You MUST return a valid JSON object with post IDs as keys and arrays of topic tags as values.
-Example input: [{"id":"1hwwvuz","title":"This sums my experience with models on Groq","subreddit":"LocalLLaMA"},{"id":"1hx7421","title":"TransPixar: a new generative model that preserves transparency,","subreddit":"LocalLLaMA"},{"id":"1hx973s","title":"BREAKING NEWS: AI safety blogging companies partnering with Defense Technology companies to lobby for regulations on 'dangerous' Open source AI.","subreddit":"LocalLLaMA"},{"id":"1hwoegx","title":"Valley Heat left a void in me","subreddit":"podcasts"}]
-Example response: {"1hwwvuz": ["technology", "generative artificial intelligence", "large language models", "cloud computing"], "1hx7421": ["", "ai", "ethics"], "1hx973s": ["technology", "ai", "ethics"], "1hwoegx": ["podcasts"]}`
+Example input: [{"id":"1hwwvuz","title":"This sums my experience with models on Groq","subreddit":"LocalLLaMA"}, {"id":"1hwoegx","title":"Valley Heat left a void in me","subreddit":"podcasts"}]
+Example response: {"1hwwvuz": ["technology", "artificial intelligence", "large language models", "cloud computing",  "groq", "machine learning","generative ai"], "1hwoegx": ["podcast", "california", "review", "recommendations", "audio"]}`
                 },
                 {
                     role: "user",
