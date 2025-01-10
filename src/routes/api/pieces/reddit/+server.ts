@@ -178,7 +178,7 @@ async function transformRedditPostsToPieces(posts: RedditPost[]): Promise<Piece[
 
 export const GET: RequestHandler = async ({ fetch }) => {
     try {
-        const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/', {
+        const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/?raw_json=1&count=100', {
             headers: {
                 'Authorization': `bearer ${env.HARDCODED_REDDIT_TOKEN}`
             }
