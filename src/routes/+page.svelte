@@ -37,7 +37,7 @@
 		console.debug(
 			'Generating piece for position:',
 			position,
-			`relative to center tone: ${center_tone.toFixed(2)}`
+			`relative to center - tone: ${center_tone.toFixed(4)}, topic: ${center_topic}`
 		);
 
 		const available_pieces = data.pieces.filter((p) => !used_piece_ids.has(p.id));
@@ -47,34 +47,58 @@
 			return null;
 		}
 
+		// Calculate desired ranges based on position
 		const col_diff = position.col - current_position.col;
-		let desired_tone: number;
+		const row_diff = position.row - current_position.row;
 
+		// Tone calculation (horizontal) - keeping existing logic
+		let desired_tone = center_tone;
 		if (col_diff < 0) {
 			desired_tone = Math.max(0, center_tone - 0.2);
 		} else if (col_diff > 0) {
 			desired_tone = Math.min(1, center_tone + 0.2);
-		} else {
-			desired_tone = center_tone;
 		}
 
-		console.debug('Desired tone:', desired_tone.toFixed(2), 'for column offset:', col_diff);
+		// Topic calculation (vertical)
+		let desired_topic = center_topic;
+		if (row_diff < 0) {
+			desired_topic = Math.max(0, center_topic - 0.0002);
+		} else if (row_diff > 0) {
+			desired_topic = Math.min(1, center_topic + 0.0002);
+		}
 
+		console.debug(
+			`Desired values - tone: ${desired_tone.toFixed(4)}, topic: ${desired_topic.toFixed(4)}`,
+			`for offset: (${row_diff}, ${col_diff})`
+		);
+
+		// Sort by combined difference
 		const sorted_pieces = [...available_pieces].sort((a, b) => {
-			const a_diff = Math.abs(a.tone - desired_tone);
-			const b_diff = Math.abs(b.tone - desired_tone);
-			return a_diff - b_diff;
+			const a_tone_diff = Math.abs(a.tone - desired_tone);
+			const b_tone_diff = Math.abs(b.tone - desired_tone);
+			const a_topic_diff = Math.abs(a.topicProjection - desired_topic);
+			const b_topic_diff = Math.abs(b.topicProjection - desired_topic);
+
+			// Weight tone differences more heavily than topic (since topic range is smaller)
+			const a_total = a_tone_diff * 5 + a_topic_diff * 1000;
+			const b_total = b_tone_diff * 5 + b_topic_diff * 1000;
+
+			return a_total - b_total;
 		});
 
 		if (!sorted_pieces.length) {
-			console.debug('No pieces available in desired range for position:', position);
+			console.debug('No pieces available in desired ranges for position:', position);
 			return null;
 		}
 
 		const piece = sorted_pieces[0];
 		used_piece_ids.add(piece.id);
 
-		console.debug('Selected piece tone:', piece.tone.toFixed(2));
+		console.debug(
+			'Selected piece -',
+			`tone: ${piece.tone.toFixed(4)},`,
+			`topic: ${piece.topicProjection.toFixed(4)}`
+		);
 
 		return {
 			...piece,
