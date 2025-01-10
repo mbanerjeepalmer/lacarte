@@ -16,12 +16,34 @@
 	let current_position = $state<GridPosition>({ row: 0, col: 0 });
 	let virtual_grid = $state<Map<string, GridPiece>>(new Map());
 
-	// Simple position-based piece lookup
-	function get_piece_at_position(position: GridPosition): GridPiece | undefined {
-		return virtual_grid.get(`${position.row},${position.col}`);
+	// Utility functions
+	function get_position_key(pos: GridPosition): string {
+		return `${pos.row},${pos.col}`;
 	}
 
-	// Movement only updates position
+	function get_piece_at_position(position: GridPosition): GridPiece | undefined {
+		return virtual_grid.get(get_position_key(position));
+	}
+
+	function generate_piece_for_position(position: GridPosition): GridPiece {
+		console.debug('Generating piece for position:', position);
+
+		// Get currently unused pieces
+		const used_ids = new Set([...virtual_grid.values()].map((p) => p.id));
+		const available_pieces = data.pieces.filter((p) => !used_ids.has(p.id));
+
+		const piece =
+			available_pieces.length > 0
+				? available_pieces[Math.floor(Math.random() * available_pieces.length)]
+				: data.pieces[Math.floor(Math.random() * data.pieces.length)];
+
+		return {
+			...piece,
+			position
+		};
+	}
+
+	// Movement and grid update
 	function move(direction: 'up' | 'down' | 'left' | 'right') {
 		const new_position = { ...current_position };
 
@@ -41,6 +63,21 @@
 		}
 
 		console.info('Moving to position:', new_position);
+
+		// Generate pieces for empty positions in the 3x3 grid
+		const new_grid = new Map(virtual_grid);
+		for (let row = new_position.row - 1; row <= new_position.row + 1; row++) {
+			for (let col = new_position.col - 1; col <= new_position.col + 1; col++) {
+				const pos = { row, col };
+				const key = get_position_key(pos);
+				if (!new_grid.has(key)) {
+					new_grid.set(key, generate_piece_for_position(pos));
+				}
+			}
+		}
+
+		// Update state in one go
+		virtual_grid = new_grid;
 		current_position = new_position;
 	}
 
