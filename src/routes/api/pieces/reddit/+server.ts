@@ -135,7 +135,8 @@ Example response: {"1hwwvuz": ["technology", "artificial intelligence", "large l
 
 export const GET: RequestHandler = async ({ fetch }) => {
     try {
-        const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/?raw_json=1&count=100', {
+        // if we want to get more we need to use the after param at the top level
+        const response = await fetch('https://oauth.reddit.com/user/mauriceapi/m/good_survey/?raw_json=1&limit=50', {
             headers: {
                 'Authorization': `bearer ${env.HARDCODED_REDDIT_TOKEN}`
             }

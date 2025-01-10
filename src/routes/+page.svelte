@@ -73,7 +73,7 @@
 
 <div class="fixed inset-0 snap-both snap-mandatory overflow-auto">
 	<div
-		class="grid w-fit gap-2 px-[10vw] py-[10vh]"
+		class="grid w-fit gap-2 px-[50vw] py-[50vh]"
 		style="
 			grid-template-columns: repeat({maxItemsInRow}, minmax(min(80vw, 50rem), min(80vw, 50rem))); 
 			grid-template-rows: repeat({numRows}, auto);
@@ -108,7 +108,7 @@
 							<img
 								src={item.preview.images[0].source.url}
 								alt=""
-								class="absolute inset-0 h-full w-full rounded-md object-cover"
+								class="absolute inset-0 h-full w-full rounded-md object-contain"
 							/>
 						</div>
 					{:else if item.thumbnail && item.thumbnail !== 'self' && item.thumbnail !== 'default'}
