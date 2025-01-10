@@ -4,12 +4,14 @@ Key Principles
 
 - Write concise, technical code with accurate Svelte 5 and SvelteKit examples.
 - Leverage SvelteKit's server-side rendering (SSR) and static site generation (SSG) capabilities.
-- Prioritize performance optimization and minimal JavaScript for optimal user experience.
+- Prioritise performance optimization and minimal JavaScript for optimal user experience.
 - Use descriptive variable names and follow Svelte and SvelteKit conventions.
-- Organize files using SvelteKit's file-based routing system.
+- Organise files using SvelteKit's file-based routing system.
 
 Code Style and Structure
 
+- Every piece of code you write should have some console.log. Use levels (e.g. console.debug) as appropriate.
+- Avoid comments. They are only to be used to highlight assumptions or areas for improvement.
 - Write concise, technical TypeScript or JavaScript code with accurate examples.
 - Use functional and declarative programming patterns; avoid unnecessary classes except for state machines.
 - Prefer iteration and modularization over code duplication.
@@ -129,7 +131,7 @@ State Management
 
 Routing and Pages
 
-- Utilize SvelteKit's file-based routing system in the src/routes/ directory.
+- Utilise SvelteKit's file-based routing system in the src/routes/ directory.
 - Implement dynamic routes using [slug] syntax.
 - Use load functions for server-side data fetching and pre-rendering.
 - Implement proper error handling with +error.svelte pages.
@@ -146,7 +148,7 @@ Performance Optimization
 - Use `{#key}` blocks to force re-rendering of components when needed.
 - Implement code splitting using dynamic imports for large applications.
 - Profile and monitor performance using browser developer tools.
-- Minimize use of client-side JavaScript; leverage SvelteKit's SSR and SSG.
+- Minimise use of client-side JavaScript; leverage SvelteKit's SSR and SSG.
 - Use modern html elements and features wherever possible.
 - Implement proper lazy loading for images and other assets.
 
@@ -157,7 +159,6 @@ Data Fetching and API Routes
 - Create API routes in the src/routes/api/ directory.
 - Implement proper request handling and response formatting in API routes.
 - Use SvelteKit's hooks for global API middleware.
-- Data comes from Drizzle via a Postgres database using Zero for data querying in the UI.
 
 SEO and Meta Tags
 
@@ -167,7 +168,7 @@ SEO and Meta Tags
 
 Forms and Actions
 
-- Utilize SvelteKit's form actions for server-side form handling.
+- Utilise SvelteKit's form actions for server-side form handling.
 - Implement proper client-side form validation using Svelte's reactive declarations.
 - Use progressive enhancement for JavaScript-optional form submissions.
 
@@ -176,13 +177,12 @@ Accessibility
 - Ensure proper semantic HTML structure in Svelte components.
 - Implement ARIA attributes where necessary.
 - Ensure keyboard navigation support for interactive elements.
-- Use Svelte's bind:this for managing focus programmatically.
 
 Key Conventions
 
 1. Embrace Svelte's simplicity and avoid over-engineering solutions.
 2. Use SvelteKit for full-stack applications with SSR and API routes.
-3. Prioritize Web Vitals (LCP, FID, CLS) for performance optimization.
+3. Prioritise Web Vitals (LCP, FID, CLS) for performance optimization.
 4. Use environment variables for configuration management.
 5. Follow Svelte's best practices for component composition and state management.
 6. Ensure cross-browser compatibility by testing on multiple platforms.
