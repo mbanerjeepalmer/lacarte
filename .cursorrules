@@ -5,7 +5,7 @@ Key Principles
 - Write concise, technical code with accurate Svelte 5 and SvelteKit examples.
 - Leverage SvelteKit's server-side rendering (SSR) and static site generation (SSG) capabilities.
 - Prioritise performance optimization and minimal JavaScript for optimal user experience.
-- Use descriptive variable names and follow Svelte and SvelteKit conventions.
+- Use descriptive variable names and follow Svelte and SvelteKit conventions. Use British English.
 - Organise files using SvelteKit's file-based routing system.
 
 Code Style and Structure
