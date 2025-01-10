@@ -17,7 +17,7 @@
 	// As a stopgap until I work out a better algorithm we're just grouping by topic and then sorting within each row.
 	// Later it would be nice to make it more consistent.
 	// So if you're on topic 0.5 and tone 0.7, then moving to topic 0.6 keeps tone 0.7
-	const numRows = 20;
+	const numRows = 10;
 
 	const pieces = data.pieces || [];
 	console.debug('PIECES:', JSON.stringify(pieces));
