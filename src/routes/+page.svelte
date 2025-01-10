@@ -43,6 +43,21 @@
 		};
 	}
 
+	function generate_surrounding_pieces(center: GridPosition) {
+		console.debug('Generating pieces around:', center);
+		const new_grid = new Map(virtual_grid);
+		for (let row = center.row - 1; row <= center.row + 1; row++) {
+			for (let col = center.col - 1; col <= center.col + 1; col++) {
+				const pos = { row, col };
+				const key = get_position_key(pos);
+				if (!new_grid.has(key)) {
+					new_grid.set(key, generate_piece_for_position(pos));
+				}
+			}
+		}
+		return new_grid;
+	}
+
 	// Movement and grid update
 	function move(direction: 'up' | 'down' | 'left' | 'right') {
 		const new_position = { ...current_position };
@@ -64,20 +79,8 @@
 
 		console.info('Moving to position:', new_position);
 
-		// Generate pieces for empty positions in the 3x3 grid
-		const new_grid = new Map(virtual_grid);
-		for (let row = new_position.row - 1; row <= new_position.row + 1; row++) {
-			for (let col = new_position.col - 1; col <= new_position.col + 1; col++) {
-				const pos = { row, col };
-				const key = get_position_key(pos);
-				if (!new_grid.has(key)) {
-					new_grid.set(key, generate_piece_for_position(pos));
-				}
-			}
-		}
-
 		// Update state in one go
-		virtual_grid = new_grid;
+		virtual_grid = generate_surrounding_pieces(new_position);
 		current_position = new_position;
 	}
 
@@ -89,6 +92,7 @@
 			position: { row: 0, col: 0 }
 		};
 		virtual_grid.set('0,0', initial_piece);
+		virtual_grid = generate_surrounding_pieces({ row: 0, col: 0 });
 	}
 </script>
 
