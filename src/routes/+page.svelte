@@ -73,7 +73,7 @@
 
 <div class="fixed inset-0 snap-both snap-mandatory overflow-auto">
 	<div
-		class="grid gap-2"
+		class="grid w-fit gap-2 px-[10vw] py-[10vh]"
 		style="
 			grid-template-columns: repeat({maxItemsInRow}, minmax(min(80vw, 50rem), min(80vw, 50rem))); 
 			grid-template-rows: repeat({numRows}, auto);
