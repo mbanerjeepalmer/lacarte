@@ -3,7 +3,7 @@
 	const { data } = $props();
 	let random_pieces = $state<typeof data.pieces>([]);
 	if (data.pieces) {
-		random_pieces = [...data.pieces].sort(() => Math.random() - 0.5).slice(0, 8);
+		random_pieces = [...data.pieces].sort(() => Math.random() - 0.5).slice(0, 9);
 	}
 
 	let current_piece = $state<(typeof random_pieces)[0]>();
@@ -18,21 +18,6 @@
 	});
 </script>
 
-<!-- 
-	<div class="">
-		
-			{#each random_pieces as piece}
-				
-					{piece.title}
-				</div>
-			{/each}
-		</div>
-	</div>
-</div>
-<pre>
-	</pre> -->
-<!-- {JSON.stringify(data, null, 4)} -->
-Centre: {centred.id}
 <div class="relative overflow-auto">
 	<div class="grid grid-cols-[repeat(3,80vw)] grid-rows-[repeat(3,80vh)] overflow-scroll">
 		{#if random_pieces.length > 0}
