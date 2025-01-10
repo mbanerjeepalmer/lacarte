@@ -166,6 +166,15 @@
 	}
 </script>
 
+<header class="mx-auto max-w-md text-center font-light text-gray-600">
+	<h1>Roammit</h1>
+	<p class="text-xs">
+		Like that <a
+			class="underline decoration-gray-400 underline-offset-2"
+			href="https://www.flickr.com/photos/roamer-educationalrobot/14817194049">robot</a
+		> except with Reddit. Up/down is topic, left/right is tone.
+	</p>
+</header>
 <div class="flex flex-col items-center gap-4 p-4">
 	<div class="grid grid-cols-3 gap-2">
 		{#each [-1, 0, 1] as row}
@@ -182,7 +191,9 @@
 				>
 					<div class="text-center">
 						{#if piece}
-							<div class="line-clamp-3">{piece.title}</div>
+							<a href="https://reddit.com{piece.permalink}" target="_blank" class="hover:underline">
+								<div class="line-clamp-3">{piece.title}</div>
+							</a>
 							<div class="mt-2 text-xs text-gray-600">
 								Tone: {piece.tone.toFixed(2)}
 								<br />
@@ -202,15 +213,15 @@
 
 	<div class="grid grid-cols-3 gap-2">
 		<div></div>
-		<button class="bg-blue-500 p-2 text-white" on:click={() => move('up')}>Up</button>
+		<button class="bg-blue-500 p-2 text-white" onclick={() => move('up')}>Up</button>
 		<div></div>
-		<button class="bg-blue-500 p-2 text-white" on:click={() => move('left')}>Left</button>
+		<button class="bg-blue-500 p-2 text-white" onclick={() => move('left')}>Left</button>
 		<div class="p-2 text-center">
 			({current_position.row}, {current_position.col})
 		</div>
-		<button class="bg-blue-500 p-2 text-white" on:click={() => move('right')}>Right</button>
+		<button class="bg-blue-500 p-2 text-white" onclick={() => move('right')}>Right</button>
 		<div></div>
-		<button class="bg-blue-500 p-2 text-white" on:click={() => move('down')}>Down</button>
+		<button class="bg-blue-500 p-2 text-white" onclick={() => move('down')}>Down</button>
 		<div></div>
 	</div>
 </div>
